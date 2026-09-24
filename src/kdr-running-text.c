@@ -7,6 +7,13 @@ struct kdr_running_text_data {
     int height;
     int speed;
     bool reverse;
+    int font_size;
+    uint32_t text_color;
+    uint32_t outline_color;
+    int outline_size;
+    bool shadow;
+    int shadow_offset;
+    char *theme;
 };
 
 static const char *kdr_get_name(void *unused)
@@ -22,6 +29,13 @@ static void *kdr_create(obs_data_t *settings, obs_source_t *source)
     data->height = (int)obs_data_get_int(settings, "height");
     data->speed = (int)obs_data_get_int(settings, "speed");
     data->reverse = obs_data_get_bool(settings, "reverse");
+    data->font_size = (int)obs_data_get_int(settings, "font_size");
+    data->text_color = (uint32_t)obs_data_get_int(settings, "text_color");
+    data->outline_color = (uint32_t)obs_data_get_int(settings, "outline_color");
+    data->outline_size = (int)obs_data_get_int(settings, "outline_size");
+    data->shadow = obs_data_get_bool(settings, "shadow");
+    data->shadow_offset = (int)obs_data_get_int(settings, "shadow_offset");
+    data->theme = bstrdup(obs_data_get_string(settings, "theme"));
     data->text = bstrdup(obs_data_get_string(settings, "text"));
     UNUSED_PARAMETER(source);
     return data;
@@ -32,6 +46,7 @@ static void kdr_destroy(void *obj)
     struct kdr_running_text_data *data = obj;
     if (!data) return;
     bfree(data->text);
+    bfree(data->theme);
     bfree(data);
 }
 
@@ -39,11 +54,20 @@ static void kdr_update(void *obj, obs_data_t *settings)
 {
     struct kdr_running_text_data *data = obj;
     bfree(data->text);
+    bfree(data->theme);
     data->text = bstrdup(obs_data_get_string(settings, "text"));
     data->width = (int)obs_data_get_int(settings, "width");
     data->height = (int)obs_data_get_int(settings, "height");
     data->speed = (int)obs_data_get_int(settings, "speed");
     data->reverse = obs_data_get_bool(settings, "reverse");
+    data->font_size = (int)obs_data_get_int(settings, "font_size");
+    data->text_color = (uint32_t)obs_data_get_int(settings, "text_color");
+    data->outline_color = (uint32_t)obs_data_get_int(settings, "outline_color");
+    data->outline_size = (int)obs_data_get_int(settings, "outline_size");
+    data->shadow = obs_data_get_bool(settings, "shadow");
+    data->shadow_offset = (int)obs_data_get_int(settings, "shadow_offset");
+    bfree(data->theme);
+    data->theme = bstrdup(obs_data_get_string(settings, "theme"));
 }
 
 static uint32_t kdr_width(void *obj)
@@ -69,8 +93,8 @@ static obs_properties_t *kdr_properties(void *obj)
     UNUSED_PARAMETER(obj);
     obs_properties_t *props = obs_properties_create();
 
-    obs_properties_add_text(props, "text", "Text", OBS_TEXT_DEFAULT);
-    obs_properties_add_int(props, "speed", "Speed", 1, 100, 1);
+    obs_properties_add_text(props, "text", "Running text", OBS_TEXT_DEFAULT);
+    obs_properties_add_int(props, "speed", "Speed", 1, 200, 1);
     obs_properties_add_bool(props, "reverse", "Reverse direction");
     obs_properties_add_int(props, "width", "Canvas width", 100, 4096, 10);
     obs_properties_add_int(props, "height", "Canvas height", 20, 1080, 10);
@@ -84,7 +108,12 @@ static obs_properties_t *kdr_properties(void *obj)
     obs_property_list_add_string(theme, "KDR", "kdr");
 
     obs_properties_add_int(props, "font_size", "Font size", 8, 300, 1);
-    obs_properties_add_text(props, "logo_path", "Logo path", OBS_TEXT_DEFAULT);
+    obs_properties_add_color(props, "text_color", "Text color");
+    obs_properties_add_color(props, "outline_color", "Outline color");
+    obs_properties_add_int(props, "outline_size", "Outline size", 0, 20, 1);
+    obs_properties_add_bool(props, "shadow", "Drop shadow");
+    obs_properties_add_int(props, "shadow_offset", "Shadow offset", 0, 20, 1);
+    obs_properties_add_path(props, "logo_path", "Logo / icon", OBS_PATH_FILE, "Image files (*.png *.jpg *.jpeg *.webp)", NULL);
 
     return props;
 }
@@ -98,6 +127,11 @@ static void kdr_defaults(obs_data_t *settings)
     obs_data_set_default_int(settings, "height", 80);
     obs_data_set_default_string(settings, "theme", "modern");
     obs_data_set_default_int(settings, "font_size", 42);
+    obs_data_set_default_int(settings, "text_color", 0xFFFFFFFF);
+    obs_data_set_default_int(settings, "outline_color", 0x000000FF);
+    obs_data_set_default_int(settings, "outline_size", 2);
+    obs_data_set_default_bool(settings, "shadow", true);
+    obs_data_set_default_int(settings, "shadow_offset", 3);
     obs_data_set_default_string(settings, "logo_path", "");
 }
 
