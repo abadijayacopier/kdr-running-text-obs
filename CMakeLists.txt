@@ -18,7 +18,6 @@ target_include_directories(kdr-running-text-obs PRIVATE src)
 target_link_libraries(kdr-running-text-obs PRIVATE OBS::libobs)
 
 target_compile_definitions(kdr-running-text-obs PRIVATE
-    PLUGIN_NAME="kdr-running-text-obs"
     PLUGIN_VERSION="0.1.0"
 )
 
