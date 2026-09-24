@@ -1,0 +1,57 @@
+name: Build KDR Running Text OBS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    name: Build Windows x64
+    runs-on: windows-2022
+
+    steps:
+      - name: Checkout plugin
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare OBS plugin build infrastructure
+        shell: pwsh
+        run: |
+          $template = Join-Path $env:RUNNER_TEMP "obs-plugintemplate"
+          git clone --depth 1 https://github.com/obsproject/obs-plugintemplate.git $template
+
+          Copy-Item "$template/CMakePresets.json" "$env:GITHUB_WORKSPACE/CMakePresets.json" -Force
+          Copy-Item "$template/cmake" "$env:GITHUB_WORKSPACE/cmake" -Recurse -Force
+          Copy-Item "$template/.github/scripts" "$env:GITHUB_WORKSPACE/.github/scripts" -Recurse -Force
+
+      - name: Build plugin
+        shell: pwsh
+        env:
+          CI: true
+        run: |
+          .github/scripts/Build-Windows.ps1 -Target x64 -Configuration RelWithDebInfo
+
+      - name: Package build
+        shell: pwsh
+        run: |
+          $source = "$env:GITHUB_WORKSPACE/release/RelWithDebInfo"
+          $zip = "$env:GITHUB_WORKSPACE/kdr-running-text-obs-windows-x64.zip"
+
+          if (!(Test-Path $source)) {
+            throw "Build output directory not found: $source"
+          }
+
+          Compress-Archive -Path "$source/*" -DestinationPath $zip -Force
+          Get-ChildItem -Recurse $source
+
+      - name: Upload plugin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kdr-running-text-obs-windows-x64
+          path: kdr-running-text-obs-windows-x64.zip
+          if-no-files-found: error
