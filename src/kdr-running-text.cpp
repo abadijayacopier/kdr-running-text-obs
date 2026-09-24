@@ -196,6 +196,7 @@ static void *kdr_create(obs_data_t *settings, obs_source_t *source)
     d->source = source;
     d->text = bstrdup(obs_data_get_string(settings, "text"));
     d->theme = bstrdup(obs_data_get_string(settings, "theme"));
+    d->logo_path = bstrdup(obs_data_get_string(settings, "logo_path"));
     d->width = (int)obs_data_get_int(settings, "width");
     d->height = (int)obs_data_get_int(settings, "height");
     d->speed = (int)obs_data_get_int(settings, "speed");
@@ -223,7 +224,7 @@ static void kdr_destroy(void *obj)
 static void kdr_update(void *obj, obs_data_t *s)
 {
     auto *d = (kdr_running_text_data *)obj;
-    bfree(d->text); bfree(d->theme);
+    bfree(d->text); bfree(d->theme); bfree(d->logo_path);
     d->text = bstrdup(obs_data_get_string(s, "text"));
     d->theme = bstrdup(obs_data_get_string(s, "theme"));
     d->logo_path = bstrdup(obs_data_get_string(s, "logo_path"));
