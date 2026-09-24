@@ -11,11 +11,11 @@ find_package(libobs REQUIRED)
 
 add_library(kdr-running-text-obs MODULE
     src/plugin-main.c
-    src/kdr-running-text.c
+    src/kdr-running-text.cpp
 )
 
 target_include_directories(kdr-running-text-obs PRIVATE src)
-target_link_libraries(kdr-running-text-obs PRIVATE OBS::libobs)
+target_link_libraries(kdr-running-text-obs PRIVATE OBS::libobs)\n\nif(WIN32)\n    target_link_libraries(kdr-running-text-obs PRIVATE gdiplus)\nendif()
 
 target_compile_definitions(kdr-running-text-obs PRIVATE
     PLUGIN_VERSION="0.1.0"
