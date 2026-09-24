@@ -6,11 +6,11 @@ OBS_MODULE_USE_DEFAULT_LOCALE("kdr-running-text-obs", "en-US")
 
 bool obs_module_load(void)
 {
-    blog(LOG_INFO, "KDR Running Text for OBS loaded (version %s)", PLUGIN_VERSION);
+    kdr_running_text_graphics_init();\n    blog(LOG_INFO, "KDR Running Text for OBS loaded (version %s)", PLUGIN_VERSION);
     return kdr_running_text_register();
 }
 
 void obs_module_unload(void)
 {
-    blog(LOG_INFO, "KDR Running Text for OBS unloaded");
+    kdr_running_text_graphics_shutdown();\n    blog(LOG_INFO, "KDR Running Text for OBS unloaded");
 }
