@@ -1,5 +1,16 @@
 #pragma once
 
-#include <stdbool.h>\n#include <stdint.h>
+#include <stdbool.h>
+#include <stdint.h>
 
-bool kdr_running_text_register(void);\nvoid kdr_running_text_graphics_init(void);\nvoid kdr_running_text_graphics_shutdown(void);
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+bool kdr_running_text_register(void);
+void kdr_running_text_graphics_init(void);
+void kdr_running_text_graphics_shutdown(void);
+
+#ifdef __cplusplus
+}
+#endif
