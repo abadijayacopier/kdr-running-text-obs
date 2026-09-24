@@ -40,8 +40,10 @@ static std::wstring utf8_to_wide(const char *s)
     if (!s || !*s) return L"";
     int n = MultiByteToWideChar(CP_UTF8, 0, s, -1, nullptr, 0);
     if (n <= 0) return L"";
-    std::wstring out((size_t)n - 1, L'\0');
+    // Allocate space for the terminating null written by MultiByteToWideChar.
+    std::wstring out((size_t)n, L'\0');
     MultiByteToWideChar(CP_UTF8, 0, s, -1, out.data(), n);
+    out.resize((size_t)n - 1);
     return out;
 }
 
@@ -151,7 +153,7 @@ static void render_text(kdr_running_text_data *d)
 
     if (style.outline_size > 0) {
         GraphicsPath path;
-        path.AddString(text.c_str(), -1, &family, FontStyleRegular, (REAL)d->font_size, draw, &fmt);
+        path.AddString(text.c_str(), -1, &family, style.font_style, (REAL)d->font_size, draw, &fmt);
         Pen pen(style.outline, (REAL)style.outline_size * 2.0f);
         pen.SetLineJoin(LineJoinRound);
         g.DrawPath(&pen, &path);
