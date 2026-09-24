@@ -278,9 +278,69 @@ static void kdr_video_render(void *obj, gs_effect_t *effect)
     gs_enable_framebuffer_srgb(previous);
 }
 
+
+static bool kdr_preset_modified(obs_properties_t *, obs_property_t *, obs_data_t *s)
+{
+    const char *preset = obs_data_get_string(s, "preset");
+    if (!preset || !*preset || strcmp(preset, "custom") == 0)
+        return true;
+
+    if (strcmp(preset, "kdr_live") == 0) {
+        obs_data_set_string(s, "theme", "kdr");
+        obs_data_set_int(s, "speed", 30);
+        obs_data_set_int(s, "font_size", 42);
+        obs_data_set_int(s, "outline_size", 2);
+        obs_data_set_bool(s, "shadow", true);
+        obs_data_set_int(s, "shadow_offset", 3);
+        obs_data_set_int(s, "logo_size", 56);
+        obs_data_set_int(s, "logo_gap", 18);
+    } else if (strcmp(preset, "news") == 0) {
+        obs_data_set_string(s, "theme", "news");
+        obs_data_set_int(s, "speed", 24);
+        obs_data_set_int(s, "font_size", 44);
+        obs_data_set_int(s, "outline_size", 3);
+        obs_data_set_bool(s, "shadow", true);
+        obs_data_set_int(s, "shadow_offset", 3);
+    } else if (strcmp(preset, "sports") == 0) {
+        obs_data_set_string(s, "theme", "sports");
+        obs_data_set_int(s, "speed", 38);
+        obs_data_set_int(s, "font_size", 46);
+        obs_data_set_int(s, "outline_size", 3);
+        obs_data_set_bool(s, "shadow", true);
+        obs_data_set_int(s, "shadow_offset", 3);
+    } else if (strcmp(preset, "minimal") == 0) {
+        obs_data_set_string(s, "theme", "minimal");
+        obs_data_set_int(s, "speed", 28);
+        obs_data_set_int(s, "font_size", 40);
+        obs_data_set_int(s, "outline_size", 0);
+        obs_data_set_bool(s, "shadow", false);
+        obs_data_set_int(s, "shadow_offset", 0);
+    } else if (strcmp(preset, "modern") == 0) {
+        obs_data_set_string(s, "theme", "modern");
+        obs_data_set_int(s, "speed", 30);
+        obs_data_set_int(s, "font_size", 42);
+        obs_data_set_int(s, "outline_size", 2);
+        obs_data_set_bool(s, "shadow", true);
+        obs_data_set_int(s, "shadow_offset", 3);
+    }
+
+    return true;
+}
+
 static obs_properties_t *kdr_properties(void *)
 {
     obs_properties_t *p = obs_properties_create();
+
+    obs_property_t *preset = obs_properties_add_list(p, "preset", "Preset / Template",
+        OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+    obs_property_list_add_string(preset, "KDR Live", "kdr_live");
+    obs_property_list_add_string(preset, "News", "news");
+    obs_property_list_add_string(preset, "Sports", "sports");
+    obs_property_list_add_string(preset, "Minimal", "minimal");
+    obs_property_list_add_string(preset, "Modern", "modern");
+    obs_property_list_add_string(preset, "Custom / Manual", "custom");
+    obs_property_set_modified_callback(preset, kdr_preset_modified);
+
     obs_properties_add_text(p, "text", "Running text", OBS_TEXT_DEFAULT);
     obs_properties_add_int(p, "speed", "Speed", 1, 200, 1);
     obs_properties_add_bool(p, "reverse", "Reverse direction");
@@ -301,6 +361,7 @@ static obs_properties_t *kdr_properties(void *)
 
 static void kdr_defaults(obs_data_t *s)
 {
+    obs_data_set_default_string(s, "preset", "kdr_live");
     obs_data_set_default_string(s, "text", "LIVE STREAMING KDR MULTIMEDIA"); obs_data_set_default_int(s, "speed", 30);
     obs_data_set_default_bool(s, "reverse", false); obs_data_set_default_int(s, "width", 1920); obs_data_set_default_int(s, "height", 80);
     obs_data_set_default_string(s, "theme", "modern"); obs_data_set_default_int(s, "font_size", 42);
