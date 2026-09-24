@@ -103,7 +103,8 @@ static void render_text(kdr_running_text_data *d)
     if (text.empty()) text = L" ";
 
     FontFamily family(L"Arial");
-    const theme_style style = get_theme_style(d);\n    Font font(&family, (REAL)d->font_size, style.font_style, UnitPixel);
+    const theme_style style = get_theme_style(d);
+    Font font(&family, (REAL)d->font_size, style.font_style, UnitPixel);
     Bitmap measure(8, 8, PixelFormat32bppARGB);
     Graphics mg(&measure);
     RectF box(0, 0, 16000, (REAL)d->height);
