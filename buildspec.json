@@ -25,6 +25,11 @@
       }
     }
   },
+  "platformConfig": {
+    "macos": {
+      "bundleId": "com.example.kdr-running-text-obs"
+    }
+  },
   "name": "kdr-running-text-obs",
   "displayName": "KDR Running Text for OBS",
   "version": "0.1.0",
