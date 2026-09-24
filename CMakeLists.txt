@@ -1,31 +1,42 @@
 cmake_minimum_required(VERSION 3.28...3.30)
 
-project(kdr-running-text-obs VERSION 0.1.0)
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/common/bootstrap.cmake" NO_POLICY_SCOPE)
 
-set(PLUGIN_NAME "kdr-running-text-obs")
-set(PLUGIN_AUTHOR "Supriyanto — Abadi Jaya / KDR Multimedia")
+project(${_name} VERSION ${_version})
 
-option(ENABLE_FRONTEND_API "Use obs-frontend-api" OFF)
+option(ENABLE_FRONTEND_API "Use obs-frontend-api for UI functionality" OFF)
+option(ENABLE_QT "Use Qt functionality" OFF)
+
+include(compilerconfig)
+include(defaults)
+include(helpers)
+
+add_library(${CMAKE_PROJECT_NAME} MODULE)
 
 find_package(libobs REQUIRED)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::libobs)
 
-add_library(kdr-running-text-obs MODULE
-    src/plugin-main.c
-    src/kdr-running-text.cpp
-)
+if(ENABLE_FRONTEND_API)
+  find_package(obs-frontend-api REQUIRED)
+  target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::obs-frontend-api)
+endif()
 
-target_include_directories(kdr-running-text-obs PRIVATE src)
-target_link_libraries(kdr-running-text-obs PRIVATE OBS::libobs)\n\nif(WIN32)\n    target_link_libraries(kdr-running-text-obs PRIVATE gdiplus)\nendif()
+if(ENABLE_QT)
+  find_package(Qt6 COMPONENTS Widgets Core)
+  target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Core Qt6::Widgets)
+endif()
 
-target_compile_definitions(kdr-running-text-obs PRIVATE
-    PLUGIN_VERSION="0.1.0"
-)
-
-set_target_properties(kdr-running-text-obs PROPERTIES
-    PREFIX ""
-    OUTPUT_NAME "kdr-running-text-obs"
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+  src/plugin-main.c
+  src/kdr-running-text.cpp
 )
 
 if(WIN32)
-    set_target_properties(kdr-running-text-obs PROPERTIES SUFFIX ".dll")
+  target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE gdiplus)
 endif()
+
+target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
+  PLUGIN_VERSION="${PLUGIN_VERSION}"
+)
+
+set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
