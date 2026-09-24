@@ -1,6 +1,6 @@
 # KDR Running Text OBS
 
-Native OBS Studio plugin for customizable running text overlays.
+Native OBS Studio plugin for customizable running text overlays.\n\n**Developer:** Supriyanto — Abadi Jaya
 
 ## V1
 - Native OBS source: **KDR Running Text**
