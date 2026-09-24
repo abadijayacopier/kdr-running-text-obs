@@ -2,11 +2,16 @@
 #include <obs-module.h>
 #include <graphics/graphics.h>
 #include <util/platform.h>
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <windows.h>
 #include <gdiplus.h>
 #include <string>
 #include <algorithm>
-#include <cmath>\n#include <vector>\n#include <cstring>
+#include <cmath>
+#include <vector>
+#include <cstring>
 
 using namespace Gdiplus;
 
@@ -33,7 +38,7 @@ static std::wstring utf8_to_wide(const char *s)
     if (!s || !*s) return L"";
     int n = MultiByteToWideChar(CP_UTF8, 0, s, -1, nullptr, 0);
     if (n <= 0) return L"";
-    std::wstring out((size_t)n - 1, L'\\0');
+    std::wstring out((size_t)n - 1, L'\0');
     MultiByteToWideChar(CP_UTF8, 0, s, -1, out.data(), n);
     return out;
 }
@@ -67,9 +72,9 @@ static void render_text(kdr_running_text_data *d)
     StringFormat fmt;
     mg.MeasureString(text.c_str(), -1, &font, box, &measured);
 
-    const int pad = std::max(8, d->outline_size + d->shadow_offset + 4);
-    const int w = std::max(2, (int)std::ceil(measured.Width) + pad * 2);
-    const int h = std::max(2, d->height);
+    const int pad = (std::max)(8, d->outline_size + d->shadow_offset + 4);
+    const int w = (std::max)(2, (int)std::ceil(measured.Width) + pad * 2);
+    const int h = (std::max)(2, d->height);
     Bitmap bitmap(w, h, PixelFormat32bppARGB);
     Graphics g(&bitmap);
     g.SetCompositingMode(CompositingModeSourceOver);
@@ -110,7 +115,7 @@ static void render_text(kdr_running_text_data *d)
     destroy_texture(d);
     obs_enter_graphics();
     const uint8_t *data = pixels.data();
-    d->texture = gs_texture_create((uint32_t)w, (uint32_t)h, GS_BGRA, 1, &data, GS_STATIC);
+    d->texture = gs_texture_create((uint32_t)w, (uint32_t)h, GS_BGRA, 1, &data, 0);
     obs_leave_graphics();
     d->texture_width = (uint32_t)w;
     d->texture_height = (uint32_t)h;
