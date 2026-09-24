@@ -23,6 +23,8 @@ struct kdr_running_text_data {
     bool reverse = false, shadow = true;
     uint32_t text_color = 0xFFFFFFFF, outline_color = 0x000000FF;
     int outline_size = 2, shadow_offset = 3;
+    char *logo_path = nullptr;
+    int logo_size = 56, logo_gap = 18;
     gs_texture_t *texture = nullptr;
     uint32_t texture_width = 2, texture_height = 2;
     float text_width = 2.0f;
@@ -113,7 +115,20 @@ static void render_text(kdr_running_text_data *d)
     mg.MeasureString(text.c_str(), -1, &font, box, &measured);
 
     const int pad = (std::max)(8, d->outline_size + d->shadow_offset + 4);
-    const int w = (std::max)(2, (int)std::ceil(measured.Width) + pad * 2);
+    const bool has_logo = d->logo_path && *d->logo_path;
+    std::wstring logo_file = has_logo ? utf8_to_wide(d->logo_path) : L"";
+    Bitmap *logo = nullptr;
+    UINT logo_w = 0, logo_h = 0;
+    if (has_logo && !logo_file.empty()) {
+        logo = new Bitmap(logo_file.c_str());
+        if (logo->GetLastStatus() == Ok) {
+            logo_w = logo->GetWidth(); logo_h = logo->GetHeight();
+        } else {
+            delete logo; logo = nullptr;
+        }
+    }
+    const int logo_extra = logo ? d->logo_size + d->logo_gap : 0;
+    const int w = (std::max)(2, (int)std::ceil(measured.Width) + pad * 2 + logo_extra);
     const int h = (std::max)(2, d->height);
     Bitmap bitmap(w, h, PixelFormat32bppARGB);
     Graphics g(&bitmap);
@@ -122,7 +137,7 @@ static void render_text(kdr_running_text_data *d)
     g.SetTextRenderingHint(TextRenderingHintAntiAliasGridFit);
     g.Clear(Color(0, 0, 0, 0));
 
-    RectF draw((REAL)pad, 0, (REAL)(w - pad * 2), (REAL)h);
+    RectF draw((REAL)(pad + logo_extra), 0, (REAL)(w - pad * 2 - logo_extra), (REAL)h);
     SolidBrush text_brush(style.text);
     SolidBrush outline_brush(style.outline);
 
@@ -142,6 +157,18 @@ static void render_text(kdr_running_text_data *d)
         g.DrawPath(&pen, &path);
     }
     g.DrawString(text.c_str(), -1, &font, draw, &fmt, &text_brush);
+
+    if (logo) {
+        const REAL target_w = (REAL)d->logo_size;
+        const REAL target_h = (REAL)d->logo_size;
+        const REAL scale = (REAL)(logo_w ? logo_w : 1) / (REAL)(logo_h ? logo_h : 1);
+        REAL draw_w = target_w, draw_h = target_h;
+        if (scale > 1.0f) draw_h = target_w / scale;
+        else draw_w = target_h * scale;
+        RectF logo_rect((REAL)pad, ((REAL)h - draw_h) * 0.5f, draw_w, draw_h);
+        g.DrawImage(logo, logo_rect);
+        delete logo; logo = nullptr;
+    }
 
     BitmapData bd;
     Rect rect(0, 0, w, h);
@@ -179,6 +206,8 @@ static void *kdr_create(obs_data_t *settings, obs_source_t *source)
     d->outline_size = (int)obs_data_get_int(settings, "outline_size");
     d->shadow = obs_data_get_bool(settings, "shadow");
     d->shadow_offset = (int)obs_data_get_int(settings, "shadow_offset");
+    d->logo_size = (int)obs_data_get_int(settings, "logo_size");
+    d->logo_gap = (int)obs_data_get_int(settings, "logo_gap");
     return d;
 }
 
@@ -187,7 +216,7 @@ static void kdr_destroy(void *obj)
     auto *d = (kdr_running_text_data *)obj;
     if (!d) return;
     destroy_texture(d);
-    bfree(d->text); bfree(d->theme);
+    bfree(d->text); bfree(d->theme); bfree(d->logo_path);
     delete d;
 }
 
@@ -197,11 +226,13 @@ static void kdr_update(void *obj, obs_data_t *s)
     bfree(d->text); bfree(d->theme);
     d->text = bstrdup(obs_data_get_string(s, "text"));
     d->theme = bstrdup(obs_data_get_string(s, "theme"));
+    d->logo_path = bstrdup(obs_data_get_string(s, "logo_path"));
     d->width = (int)obs_data_get_int(s, "width"); d->height = (int)obs_data_get_int(s, "height");
     d->speed = (int)obs_data_get_int(s, "speed"); d->reverse = obs_data_get_bool(s, "reverse");
     d->font_size = (int)obs_data_get_int(s, "font_size"); d->text_color = (uint32_t)obs_data_get_int(s, "text_color");
     d->outline_color = (uint32_t)obs_data_get_int(s, "outline_color"); d->outline_size = (int)obs_data_get_int(s, "outline_size");
     d->shadow = obs_data_get_bool(s, "shadow"); d->shadow_offset = (int)obs_data_get_int(s, "shadow_offset");
+    d->logo_size = (int)obs_data_get_int(s, "logo_size"); d->logo_gap = (int)obs_data_get_int(s, "logo_gap");
     render_text(d);
 }
 
@@ -262,6 +293,8 @@ static obs_properties_t *kdr_properties(void *)
     obs_properties_add_int(p, "outline_size", "Outline size", 0, 20, 1);
     obs_properties_add_bool(p, "shadow", "Drop shadow"); obs_properties_add_int(p, "shadow_offset", "Shadow offset", 0, 20, 1);
     obs_properties_add_path(p, "logo_path", "Logo / icon", OBS_PATH_FILE, "Image files (*.png *.jpg *.jpeg *.webp)", nullptr);
+    obs_properties_add_int(p, "logo_size", "Logo size", 16, 300, 1);
+    obs_properties_add_int(p, "logo_gap", "Logo-text gap", 0, 100, 1);
     return p;
 }
 
@@ -273,6 +306,7 @@ static void kdr_defaults(obs_data_t *s)
     obs_data_set_default_int(s, "text_color", 0xFFFFFFFF); obs_data_set_default_int(s, "outline_color", 0x000000FF);
     obs_data_set_default_int(s, "outline_size", 2); obs_data_set_default_bool(s, "shadow", true); obs_data_set_default_int(s, "shadow_offset", 3);
     obs_data_set_default_string(s, "logo_path", "");
+    obs_data_set_default_int(s, "logo_size", 56); obs_data_set_default_int(s, "logo_gap", 18);
 }
 
 bool kdr_running_text_register(void)
