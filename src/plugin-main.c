@@ -1,7 +1,8 @@
 #include <obs-module.h>
+#include "kdr-running-text.h"
 
 OBS_DECLARE_MODULE()
-OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
+OBS_MODULE_USE_DEFAULT_LOCALE("kdr-running-text-obs", "en-US")
 
 bool obs_module_load(void)
 {
