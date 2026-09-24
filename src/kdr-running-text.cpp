@@ -48,6 +48,45 @@ static Color to_gdip(uint32_t c)
     return Color((BYTE)((c >> 24) & 0xff), (BYTE)((c >> 16) & 0xff), (BYTE)((c >> 8) & 0xff), (BYTE)(c & 0xff));
 }
 
+struct theme_style {
+    Color text;
+    Color outline;
+    int font_style = FontStyleRegular;
+    int outline_size = 2;
+    bool shadow = true;
+};
+
+static theme_style get_theme_style(const kdr_running_text_data *d)
+{
+    theme_style s{to_gdip(d->text_color), to_gdip(d->outline_color), FontStyleRegular, d->outline_size, d->shadow};
+    const char *theme = d->theme ? d->theme : "modern";
+
+    if (strcmp(theme, "news") == 0) {
+        s.text = Color(255, 255, 255, 255);
+        s.outline = Color(255, 210, 30, 30);
+        s.outline_size = (std::max)(3, d->outline_size);
+        s.shadow = true;
+    } else if (strcmp(theme, "sports") == 0) {
+        s.text = Color(255, 255, 255, 255);
+        s.outline = Color(255, 20, 80, 210);
+        s.font_style = FontStyleBold;
+        s.outline_size = (std::max)(2, d->outline_size);
+        s.shadow = true;
+    } else if (strcmp(theme, "minimal") == 0) {
+        s.text = to_gdip(d->text_color);
+        s.outline = Color(0, 0, 0, 0);
+        s.outline_size = 0;
+        s.shadow = false;
+    } else if (strcmp(theme, "kdr") == 0) {
+        s.text = Color(255, 255, 255, 255);
+        s.outline = Color(255, 0, 170, 255);
+        s.font_style = FontStyleBold;
+        s.outline_size = (std::max)(2, d->outline_size);
+        s.shadow = true;
+    }
+    return s;
+}
+
 static void destroy_texture(kdr_running_text_data *d)
 {
     if (d->texture) {
@@ -64,7 +103,7 @@ static void render_text(kdr_running_text_data *d)
     if (text.empty()) text = L" ";
 
     FontFamily family(L"Arial");
-    Font font(&family, (REAL)d->font_size, FontStyleRegular, UnitPixel);
+    const theme_style style = get_theme_style(d);\n    Font font(&family, (REAL)d->font_size, style.font_style, UnitPixel);
     Bitmap measure(8, 8, PixelFormat32bppARGB);
     Graphics mg(&measure);
     RectF box(0, 0, 16000, (REAL)d->height);
@@ -83,10 +122,10 @@ static void render_text(kdr_running_text_data *d)
     g.Clear(Color(0, 0, 0, 0));
 
     RectF draw((REAL)pad, 0, (REAL)(w - pad * 2), (REAL)h);
-    SolidBrush text_brush(to_gdip(d->text_color));
-    SolidBrush outline_brush(to_gdip(d->outline_color));
+    SolidBrush text_brush(style.text);
+    SolidBrush outline_brush(style.outline);
 
-    if (d->shadow) {
+    if (style.shadow) {
         SolidBrush shadow(Color(150, 0, 0, 0));
         RectF shadow_box = draw;
         shadow_box.X += (REAL)d->shadow_offset;
@@ -94,10 +133,10 @@ static void render_text(kdr_running_text_data *d)
         g.DrawString(text.c_str(), -1, &font, shadow_box, &fmt, &shadow);
     }
 
-    if (d->outline_size > 0) {
+    if (style.outline_size > 0) {
         GraphicsPath path;
         path.AddString(text.c_str(), -1, &family, FontStyleRegular, (REAL)d->font_size, draw, &fmt);
-        Pen pen(to_gdip(d->outline_color), (REAL)d->outline_size * 2.0f);
+        Pen pen(style.outline, (REAL)style.outline_size * 2.0f);
         pen.SetLineJoin(LineJoinRound);
         g.DrawPath(&pen, &path);
     }
