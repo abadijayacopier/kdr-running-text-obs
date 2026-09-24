@@ -54,7 +54,6 @@ static void kdr_update(void *obj, obs_data_t *settings)
 {
     struct kdr_running_text_data *data = obj;
     bfree(data->text);
-    bfree(data->theme);
     data->text = bstrdup(obs_data_get_string(settings, "text"));
     data->width = (int)obs_data_get_int(settings, "width");
     data->height = (int)obs_data_get_int(settings, "height");
