@@ -6,7 +6,7 @@
 #include <gdiplus.h>
 #include <string>
 #include <algorithm>
-#include <cmath>
+#include <cmath>\n#include <vector>\n#include <cstring>
 
 using namespace Gdiplus;
 
